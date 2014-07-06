@@ -27,7 +27,7 @@ public abstract class AbstractDataFileWriter implements DataFileWriter {
 
   @Override
   public void writeToFile(Iterator<?> dtoIterator, File outputFile) throws IOException {
-    try (BufferedWriter writer = new BufferedWriter(new FileWriter(outputFile))) {
+    try (Writer writer = new BufferedWriter(new FileWriter(outputFile))) {
       writeToWriter(dtoIterator, writer); // delegate the writing implementation
       writer.flush();
     }
