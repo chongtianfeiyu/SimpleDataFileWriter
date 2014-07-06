@@ -14,7 +14,7 @@ import com.lizhaoliu.annotation.DataField;
  */
 public class CsvDataFileWriter extends AbstractDataFileWriter {
 
-  private static final String FIELD_SPARATOR = ", ";
+  private static final String FIELD_SPARATOR = ",";
 
   @Override
   protected void writeToWriter(final Iterator<?> dtoIterator, final Writer writer) throws IOException {
