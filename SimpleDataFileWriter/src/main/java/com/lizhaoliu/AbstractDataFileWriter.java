@@ -6,15 +6,14 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.Writer;
 import java.lang.reflect.Field;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
+import java.util.List;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
 
-import com.google.common.collect.Multimap;
-import com.google.common.collect.TreeMultimap;
+import com.google.common.collect.Lists;
 import com.lizhaoliu.annotation.DataField;
 
 /**
@@ -26,16 +25,17 @@ public abstract class AbstractDataFileWriter implements DataFileWriter {
   private static final Logger logger = Logger.getLogger(AbstractDataFileWriter.class);
 
   @Override
-  public void writeToFile(Iterator<?> dtoIterator, File outputFile) throws IOException {
+  public void writeToFile(Iterator<?> pojoIterator, File outputFile) throws IOException {
     try (Writer writer = new BufferedWriter(new FileWriter(outputFile))) {
-      writeToWriter(dtoIterator, writer); // delegate the writing implementation
+      writeToWriter(pojoIterator, writer); // delegate the writing
+                                           // implementation
       writer.flush();
     }
   }
 
   /**
-   * A helper method that creates a {@link Collection} which contains all fields
-   * annotated with {@link DataField} from {@code dto} in proper {@link String}
+   * A helper method that creates a {@link List} which contains all fields
+   * annotated with {@link DataField} from {@code obj} in proper {@link String}
    * representations.
    * 
    * @param obj
@@ -43,20 +43,24 @@ public abstract class AbstractDataFileWriter implements DataFileWriter {
    * @param fieldFormatter
    *          a {@link FieldFormatter} to create {@link String} representation
    *          of a field
-   * @return a {@link Collection} containing formatted fields in {@link String}
+   * @return a {@link List} containing formatted fields in {@link String}
    *         representation
    */
-  protected Collection<String> collectFileds(final Object obj, final FieldFormatter fieldFormatter) {
+  protected List<String> collectFileds(final Object obj, final FieldFormatter fieldFormatter) {
     if (obj == null) {
-      return Collections.emptySet();
+      return Collections.emptyList();
     }
-    // Whether the fields are ordered or not, a TreeMultimap will do the right
-    // thing
-    Multimap<Integer, String> fieldsContainer = TreeMultimap.create();
+    List<FieldEntry> fieldsContainer = Lists.newArrayList();
     for (Field field : obj.getClass().getDeclaredFields()) {
       processField(obj, field, fieldFormatter, fieldsContainer);
     }
-    return fieldsContainer.values();
+    // sort index-field entries by the index
+    Collections.sort(fieldsContainer);
+    List<String> resultList = Lists.newArrayList();
+    for (FieldEntry entry : fieldsContainer) {
+      resultList.add(entry.fieldValue);
+    }
+    return resultList;
   }
 
   /**
@@ -84,10 +88,10 @@ public abstract class AbstractDataFileWriter implements DataFileWriter {
    * @param fieldFormatter
    *          a {@link FieldFormatter} instance
    * @param fieldsContainer
-   *          a {@link Multimap} instance to collect formatted fields
+   *          a {@link List} which contains formatted fields
    */
   private void processField(final Object obj, final Field field, final FieldFormatter fieldFormatter,
-      final Multimap<Integer, String> fieldsContainer) {
+      final List<FieldEntry> fieldsContainer) {
     // skip if the field value is null
     if (obj == null) {
       return;
@@ -104,14 +108,35 @@ public abstract class AbstractDataFileWriter implements DataFileWriter {
     if (feedFieldAnnotation != null) {
       int fieldIndex = feedFieldAnnotation.position();
       // use empty string for null fields
-      String formatted = fieldValue == null ? StringUtils.EMPTY : fieldFormatter.formatField(field.getType(),
+      String formattedField = fieldValue == null ? StringUtils.EMPTY : fieldFormatter.formatField(field.getType(),
           fieldValue, feedFieldAnnotation);
-      fieldsContainer.put(fieldIndex, formatted);
+      fieldsContainer.add(new FieldEntry(fieldIndex, formattedField));
       return;
     }
     // otherwise traverse all sub-fields of current field
     for (Field subField : field.getType().getDeclaredFields()) {
       processField(fieldValue, subField, fieldFormatter, fieldsContainer);
+    }
+  }
+
+  /**
+   * A helper index-value pair class that can be sorted according to index
+   */
+  private static class FieldEntry implements Comparable<FieldEntry> {
+
+    public final Integer fieldIndex;
+
+    public final String fieldValue;
+
+    public FieldEntry(Integer fieldIndex, String fieldValue) {
+      this.fieldIndex = fieldIndex;
+      this.fieldValue = fieldValue;
+    }
+
+    @Override
+    public int compareTo(FieldEntry o) {
+      // no need to do null check
+      return fieldIndex - o.fieldIndex;
     }
   }
 

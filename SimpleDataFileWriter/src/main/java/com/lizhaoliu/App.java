@@ -36,7 +36,7 @@ public class App {
    */
   public void runApp(String[] args) {
     List<DtoTotal> data = Lists.newArrayList();
-    int numRecords = 10000;
+    int numRecords = 1000000;
     int strLen = 5;
     for (int i = 0; i < numRecords; ++i) {
       data.add(new DtoTotal(new DtoOne("val11-" + RandomStringUtils.randomAlphabetic(strLen), "val12-"
