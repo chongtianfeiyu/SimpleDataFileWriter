@@ -10,8 +10,7 @@ import org.apache.commons.lang.StringUtils;
 import com.lizhaoliu.annotation.DataField;
 
 /**
- * A sample implementation of a XML file writer, i.e. no templates, no
- * formatting...
+ * A sample implementation of a XML file writer, i.e. no templates, no formatting...
  */
 public class XmlDataFileWriter extends AbstractDataFileWriter {
 

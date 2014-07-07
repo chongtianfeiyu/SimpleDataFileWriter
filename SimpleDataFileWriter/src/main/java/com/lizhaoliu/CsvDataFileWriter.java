@@ -5,6 +5,7 @@ import java.io.Writer;
 import java.util.Collection;
 import java.util.Iterator;
 
+import org.apache.commons.lang.ObjectUtils;
 import org.apache.commons.lang.StringUtils;
 
 import com.lizhaoliu.annotation.DataField;
@@ -35,7 +36,7 @@ public class CsvDataFileWriter extends AbstractDataFileWriter {
       Collection<String> rowFields = collectFileds(dto, new FieldFormatter() {
         @Override
         public String formatField(Class<?> fieldType, Object fieldValue, DataField fieldAnnotation) {
-          return fieldValue.toString();
+          return ObjectUtils.toString(fieldValue);
         }
       });
       String row = StringUtils.join(rowFields, FIELD_SPARATOR) + System.lineSeparator();

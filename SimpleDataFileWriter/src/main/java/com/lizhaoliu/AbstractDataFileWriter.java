@@ -10,15 +10,14 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
-import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
 
 import com.google.common.collect.Lists;
 import com.lizhaoliu.annotation.DataField;
 
 /**
- * An abstract feed file writer service that provides utility to traverse and
- * locate all fields that are annotated with {@link DataField}
+ * An abstract feed file writer service that provides utility to traverse and locate all fields that are annotated with
+ * {@link DataField}
  */
 public abstract class AbstractDataFileWriter implements DataFileWriter {
 
@@ -34,17 +33,14 @@ public abstract class AbstractDataFileWriter implements DataFileWriter {
   }
 
   /**
-   * A helper method that creates a {@link List} which contains all fields
-   * annotated with {@link DataField} from {@code obj} in proper {@link String}
-   * representations.
+   * A helper method that creates a {@link List} which contains all fields annotated with {@link DataField} from
+   * {@code obj} in proper {@link String} representations.
    * 
    * @param obj
    *          a DTO that carries data fields to be written out
    * @param fieldFormatter
-   *          a {@link FieldFormatter} to create {@link String} representation
-   *          of a field
-   * @return a {@link List} containing formatted fields in {@link String}
-   *         representation
+   *          a {@link FieldFormatter} to create {@link String} representation of a field
+   * @return a {@link List} containing formatted fields in {@link String} representation
    */
   protected List<String> collectFileds(final Object obj, final FieldFormatter fieldFormatter) {
     if (obj == null) {
@@ -54,7 +50,7 @@ public abstract class AbstractDataFileWriter implements DataFileWriter {
     for (Field field : obj.getClass().getDeclaredFields()) {
       processField(obj, field, fieldFormatter, fieldsContainer);
     }
-    // sort index-field entries by the index
+    // sort index-field entries by the index in ascending order
     Collections.sort(fieldsContainer);
     List<String> resultList = Lists.newArrayList();
     for (FieldEntry entry : fieldsContainer) {
@@ -64,9 +60,8 @@ public abstract class AbstractDataFileWriter implements DataFileWriter {
   }
 
   /**
-   * Process and traverse all fields of {@code field}. Note that this method
-   * will recursively traverse all fields of {@code field} and its sub-fields
-   * until it sees a field annotated with {@link DataField} or there are no more
+   * Process and traverse all fields of {@code field}. Note that this method will recursively traverse all fields of
+   * {@code field} and its sub-fields until it sees a field annotated with {@link DataField} or there are no more
    * sub-fields. E.g.
    * 
    * <pre>
@@ -78,8 +73,7 @@ public abstract class AbstractDataFileWriter implements DataFileWriter {
    * }
    * </pre>
    * 
-   * {@code field1}, {@code field2}, ... and all fields of {@code field1},
-   * {@code field2}... will be traversed.
+   * {@code field1}, {@code field2}, ... and all fields of {@code field1}, {@code field2}... will be traversed.
    * 
    * @param obj
    *          the object which contains {@code field}
@@ -108,8 +102,7 @@ public abstract class AbstractDataFileWriter implements DataFileWriter {
     if (feedFieldAnnotation != null) {
       int fieldIndex = feedFieldAnnotation.position();
       // use empty string for null fields
-      String formattedField = fieldValue == null ? StringUtils.EMPTY : fieldFormatter.formatField(field.getType(),
-          fieldValue, feedFieldAnnotation);
+      String formattedField = fieldFormatter.formatField(field.getType(), fieldValue, feedFieldAnnotation);
       fieldsContainer.add(new FieldEntry(fieldIndex, formattedField));
       return;
     }
@@ -141,8 +134,7 @@ public abstract class AbstractDataFileWriter implements DataFileWriter {
   }
 
   /**
-   * Iterate every DTO using {@code dtoIterator} and writes them to
-   * {@code writer}
+   * Iterate every DTO using {@code dtoIterator} and writes them to {@code writer}
    * 
    * @param dtoIterator
    *          an {@link Iterator} of generic type objects
@@ -154,10 +146,9 @@ public abstract class AbstractDataFileWriter implements DataFileWriter {
   protected abstract void writeToWriter(Iterator<?> dtoIterator, Writer writer) throws IOException;
 
   /**
-   * This utility interface provides a method
-   * {@link #formatField(Class, Object, DataField)} that takes a value of a
-   * field in an object and returns a properly formatted {@link String}
-   * representation of that field for different file format.
+   * This utility interface provides a method {@link #formatField(Class, Object, DataField)} that takes a value of a
+   * field in an object and returns a properly formatted {@link String} representation of that field for different file
+   * format.
    */
   protected static interface FieldFormatter {
 
@@ -170,8 +161,8 @@ public abstract class AbstractDataFileWriter implements DataFileWriter {
      *          value of the field
      * @param fieldAnnotation
      *          annotation of type {@link DataField}
-     * @return A properly formatted field element, e.g. for JSON, this may be
-     *         "{"name" : value}"; for CSV, this could be "value"
+     * @return A properly formatted field element, e.g. for JSON, this may be "{"name" : value}"; for CSV, this could be
+     *         "value"
      */
     String formatField(Class<?> fieldType, Object fieldValue, DataField fieldAnnotation);
   }
