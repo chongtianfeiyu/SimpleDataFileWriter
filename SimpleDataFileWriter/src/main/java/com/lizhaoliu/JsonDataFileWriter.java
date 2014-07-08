@@ -15,12 +15,12 @@ import com.lizhaoliu.annotation.DataField;
 public class JsonDataFileWriter extends AbstractDataFileWriter {
 
   @Override
-  protected void writeToWriter(Iterator<?> dtoIterator, Writer writer) throws IOException {
+  public void write(Iterator<?> dtoIterator, Writer writer) throws IOException {
     while (dtoIterator.hasNext()) {
       Object obj = dtoIterator.next();
-      Collection<String> fields = collectFileds(obj, new FieldFormatter() {
+      Collection<String> fields = collectFileds(obj, new FieldComposer() {
         @Override
-        public String formatField(Class<?> fieldType, Object fieldValue, DataField fieldAnnotation) {
+        public String composeField(Class<?> fieldType, Object fieldValue, DataField fieldAnnotation) {
           return String.format("{\"%s\" : \"%s\"}", fieldAnnotation.name(), fieldValue);
         }
       });

@@ -1,6 +1,9 @@
 package com.lizhaoliu;
 
+import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileWriter;
+import java.io.Writer;
 import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
@@ -36,7 +39,7 @@ public class App {
    */
   public void runApp(String[] args) {
     List<DtoTotal> data = Lists.newArrayList();
-    int numRecords = 1000000;
+    int numRecords = 100000;
     int strLen = 5;
     for (int i = 0; i < numRecords; ++i) {
       data.add(new DtoTotal(new DtoOne("val11-" + RandomStringUtils.randomAlphabetic(strLen), "val12-"
@@ -68,8 +71,9 @@ public class App {
     public void run() {
       long time = 0;
       time = System.nanoTime();
-      try {
-        writer.writeToFile(dataItr, outputFile);
+      try (Writer fileWriter = new BufferedWriter(new FileWriter(outputFile))){
+        writer.write(dataItr, fileWriter);
+        fileWriter.flush();
       } catch (Exception e) {
         logger.error("An error occured: ", e);
       }

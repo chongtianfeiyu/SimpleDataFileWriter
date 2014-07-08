@@ -1,18 +1,18 @@
 package com.lizhaoliu;
 
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.Writer;
 import java.lang.reflect.Field;
+import java.util.Collection;
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.List;
+import java.util.Queue;
 
 import org.apache.log4j.Logger;
 
+import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Queues;
 import com.lizhaoliu.annotation.DataField;
 
 /**
@@ -24,12 +24,11 @@ public abstract class AbstractDataFileWriter implements DataFileWriter {
   private static final Logger logger = Logger.getLogger(AbstractDataFileWriter.class);
 
   @Override
-  public void writeToFile(Iterator<?> pojoIterator, File outputFile) throws IOException {
-    try (Writer writer = new BufferedWriter(new FileWriter(outputFile))) {
-      writeToWriter(pojoIterator, writer); // delegate the writing
-                                           // implementation
-      writer.flush();
-    }
+  public void write(Iterable<?> pojos, Writer writer) throws IOException {
+    Preconditions.checkNotNull(pojos);
+    Preconditions.checkNotNull(writer);
+
+    write(pojos.iterator(), writer);
   }
 
   /**
@@ -39,22 +38,20 @@ public abstract class AbstractDataFileWriter implements DataFileWriter {
    * @param obj
    *          a DTO that carries data fields to be written out
    * @param fieldFormatter
-   *          a {@link FieldFormatter} to create {@link String} representation of a field
+   *          a {@link FieldComposer} to create {@link String} representation of a field
    * @return a {@link List} containing formatted fields in {@link String} representation
    */
-  protected List<String> collectFileds(final Object obj, final FieldFormatter fieldFormatter) {
+  protected List<String> collectFileds(final Object obj, final FieldComposer fieldFormatter) {
     if (obj == null) {
       return Collections.emptyList();
     }
-    List<FieldEntry> fieldsContainer = Lists.newArrayList();
+    Queue<FieldEntry> fieldsCollector = Queues.newPriorityQueue();
     for (Field field : obj.getClass().getDeclaredFields()) {
-      processField(obj, field, fieldFormatter, fieldsContainer);
+      processField(obj, field, fieldFormatter, fieldsCollector);
     }
-    // sort index-field entries by the index in ascending order
-    Collections.sort(fieldsContainer);
     List<String> resultList = Lists.newArrayList();
-    for (FieldEntry entry : fieldsContainer) {
-      resultList.add(entry.fieldValue);
+    while (!fieldsCollector.isEmpty()) {
+      resultList.add(fieldsCollector.poll().fieldValue);
     }
     return resultList;
   }
@@ -79,13 +76,13 @@ public abstract class AbstractDataFileWriter implements DataFileWriter {
    *          the object which contains {@code field}
    * @param field
    *          a {@link Field} object representing a field inside {@code obj}
-   * @param fieldFormatter
-   *          a {@link FieldFormatter} instance
-   * @param fieldsContainer
-   *          a {@link List} which contains formatted fields
+   * @param fieldComposer
+   *          a {@link FieldComposer} instance
+   * @param fieldsCollector
+   *          a {@link Collection} which contains fields
    */
-  private void processField(final Object obj, final Field field, final FieldFormatter fieldFormatter,
-      final List<FieldEntry> fieldsContainer) {
+  private void processField(final Object obj, final Field field, final FieldComposer fieldComposer,
+      final Collection<FieldEntry> fieldsCollector) {
     // skip if the field value is null
     if (obj == null) {
       return;
@@ -97,18 +94,18 @@ public abstract class AbstractDataFileWriter implements DataFileWriter {
     } catch (IllegalArgumentException | IllegalAccessException e) {
       logger.warn("An error occured while processing field: " + field.getName(), e);
     }
-    DataField feedFieldAnnotation = field.getAnnotation(DataField.class);
-    // if this field is annotated with FeedField
-    if (feedFieldAnnotation != null) {
-      int fieldIndex = feedFieldAnnotation.position();
+    DataField fieldAnnotation = field.getAnnotation(DataField.class);
+    // if this field is annotated with DataField
+    if (fieldAnnotation != null) {
+      int fieldIndex = fieldAnnotation.position();
       // use empty string for null fields
-      String formattedField = fieldFormatter.formatField(field.getType(), fieldValue, feedFieldAnnotation);
-      fieldsContainer.add(new FieldEntry(fieldIndex, formattedField));
+      String formattedField = fieldComposer.composeField(field.getType(), fieldValue, fieldAnnotation);
+      fieldsCollector.add(new FieldEntry(fieldIndex, formattedField));
       return;
     }
     // otherwise traverse all sub-fields of current field
     for (Field subField : field.getType().getDeclaredFields()) {
-      processField(fieldValue, subField, fieldFormatter, fieldsContainer);
+      processField(fieldValue, subField, fieldComposer, fieldsCollector);
     }
   }
 
@@ -134,26 +131,15 @@ public abstract class AbstractDataFileWriter implements DataFileWriter {
   }
 
   /**
-   * Iterate every DTO using {@code dtoIterator} and writes them to {@code writer}
-   * 
-   * @param dtoIterator
-   *          an {@link Iterator} of generic type objects
-   * @param writer
-   *          an {@link Writer} to write to
-   * @throws IOException
-   *           if an I/O error occurs while writing to {@link Writer}
-   */
-  protected abstract void writeToWriter(Iterator<?> dtoIterator, Writer writer) throws IOException;
-
-  /**
-   * This utility interface provides a method {@link #formatField(Class, Object, DataField)} that takes a value of a
+   * This utility interface provides a method {@link #composeField(Class, Object, DataField)} that takes a value of a
    * field in an object and returns a properly formatted {@link String} representation of that field for different file
    * format.
    */
-  protected static interface FieldFormatter {
+  protected static interface FieldComposer {
 
     /**
-     * Create a properly formatted {@link String} representation of the field
+     * Create a proper {@link String} representation of the field, {@link String} escaping and other issues should be
+     * taken into consideration
      * 
      * @param fieldType
      *          specific type of the field
@@ -164,6 +150,6 @@ public abstract class AbstractDataFileWriter implements DataFileWriter {
      * @return A properly formatted field element, e.g. for JSON, this may be "{"name" : value}"; for CSV, this could be
      *         "value"
      */
-    String formatField(Class<?> fieldType, Object fieldValue, DataField fieldAnnotation);
+    String composeField(Class<?> fieldType, Object fieldValue, DataField fieldAnnotation);
   }
 }

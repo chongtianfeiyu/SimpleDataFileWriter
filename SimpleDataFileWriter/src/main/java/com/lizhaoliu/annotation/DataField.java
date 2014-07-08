@@ -13,12 +13,13 @@ import java.lang.annotation.Target;
 public @interface DataField {
 
   /**
-   * Canonical name of this data field
+   * Canonical name of this data field, this name will be written to output
    */
   String name();
 
   /**
-   * Position of this data field inside a DTO
+   * Relative position of this data field inside a POJO, fields with smaller positions appears before those with larger
+   * positions
    */
   int position() default -1;
 }

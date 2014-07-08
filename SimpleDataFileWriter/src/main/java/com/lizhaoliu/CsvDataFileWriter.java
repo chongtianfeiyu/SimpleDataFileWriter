@@ -18,14 +18,14 @@ public class CsvDataFileWriter extends AbstractDataFileWriter {
   private static final String FIELD_SPARATOR = ",";
 
   @Override
-  protected void writeToWriter(final Iterator<?> dtoIterator, final Writer writer) throws IOException {
+  public void write(final Iterator<?> dtoIterator, final Writer writer) throws IOException {
     boolean headerWritten = false;
     while (dtoIterator.hasNext()) {
       Object dto = dtoIterator.next();
       if (!headerWritten) {
-        Collection<String> headerFields = collectFileds(dto, new FieldFormatter() {
+        Collection<String> headerFields = collectFileds(dto, new FieldComposer() {
           @Override
-          public String formatField(Class<?> fieldType, Object fieldValue, DataField fieldAnnotation) {
+          public String composeField(Class<?> fieldType, Object fieldValue, DataField fieldAnnotation) {
             return fieldAnnotation.name();
           }
         });
@@ -33,9 +33,9 @@ public class CsvDataFileWriter extends AbstractDataFileWriter {
         writer.write(headers);
         headerWritten = true;
       }
-      Collection<String> rowFields = collectFileds(dto, new FieldFormatter() {
+      Collection<String> rowFields = collectFileds(dto, new FieldComposer() {
         @Override
-        public String formatField(Class<?> fieldType, Object fieldValue, DataField fieldAnnotation) {
+        public String composeField(Class<?> fieldType, Object fieldValue, DataField fieldAnnotation) {
           return ObjectUtils.toString(fieldValue);
         }
       });

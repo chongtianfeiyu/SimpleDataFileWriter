@@ -17,12 +17,12 @@ public class XmlDataFileWriter extends AbstractDataFileWriter {
   private static final String ELEMENT_FORMAT = "<%s>%s</%s>";
 
   @Override
-  protected void writeToWriter(Iterator<?> dtoIterator, Writer writer) throws IOException {
+  public void write(Iterator<?> dtoIterator, Writer writer) throws IOException {
     while (dtoIterator.hasNext()) {
       Object obj = dtoIterator.next();
-      Collection<String> fields = collectFileds(obj, new FieldFormatter() {
+      Collection<String> fields = collectFileds(obj, new FieldComposer() {
         @Override
-        public String formatField(Class<?> fieldType, Object fieldValue, DataField fieldAnnotation) {
+        public String composeField(Class<?> fieldType, Object fieldValue, DataField fieldAnnotation) {
           return String.format(ELEMENT_FORMAT, fieldAnnotation.name(), fieldValue, fieldAnnotation.name());
         }
       });

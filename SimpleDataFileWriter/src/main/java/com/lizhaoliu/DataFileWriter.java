@@ -1,7 +1,7 @@
 package com.lizhaoliu;
 
-import java.io.File;
 import java.io.IOException;
+import java.io.Writer;
 import java.util.Iterator;
 
 /**
@@ -10,14 +10,26 @@ import java.util.Iterator;
 public interface DataFileWriter {
 
   /**
-   * Write all POJOs to {@code outputFile}
+   * Write all POJOs to {@code writer}
    * 
    * @param pojoIterator
    *          an {@link Iterator} sliding over all POJOs
-   * @param outputFile
-   *          output file to write to
+   * @param writer
+   *          a {@link Writer} to write to
    * @throws IOException
-   *           if an I/O error occurs while writing to feed file
+   *           if an I/O error occurs while writing
    */
-  void writeToFile(Iterator<?> pojoIterator, File outputFile) throws IOException;
+  void write(Iterator<?> pojoIterator, Writer writer) throws IOException;
+
+  /**
+   * Write all POJOs to {@code writer}
+   * 
+   * @param pojos
+   *          a collection of POJOs
+   * @param writer
+   *          a {@link Writer} to write to
+   * @throws IOException
+   *           if an I/O error occurs while writing
+   */
+  void write(Iterable<?> pojos, Writer writer) throws IOException;
 }
